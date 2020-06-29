@@ -1,9 +1,14 @@
+#!/usr/bin/env python3
+
 import requests
 
 #import sys
 #print(sys.version)
 
 url_base = 'http://nas.er.usgs.gov/api/v1/'
+
+def search(genus, species):
+    pass
 
 if __name__ == "__main__":
     input_species = input('Enter binomial species name: ')

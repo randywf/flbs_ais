@@ -16,19 +16,19 @@ import pandas as pd
 def getdf(species_id, columns=None, limit=100, api_key=None):
     url_base = 'http://nas.er.usgs.gov/api/v1/'
 
-    if columns is not None:
-        keep_columns = columns
-    else:
-        keep_columns = ['key','decimalLatitude','decimalLongitude']
-
     if api_key is not None:
         url_request = f"{url_base}/occurrence/search?species_ID={species_id}&api_key={api_key}"
     else:
         url_request = f"{url_base}/occurrence/search?species_ID={species_id}"
     
     request_json = requests.get(url_request, params={'limit':limit}).json()
-    
     column_names = list(request_json['results'][0].keys())
+    
+    if columns is not None:
+        keep_columns = columns
+    else:
+        keep_columns = column_names
+    
     drop_columns = np.setdiff1d(column_names, keep_columns)
     
     request_df = pd.json_normalize(request_json, 'results')
