@@ -11,43 +11,83 @@ import pandas as pd
 
 URL_BASE = 'http://nas.er.usgs.gov/api/v1/'
 
+
+def get_col_rename(df, type):
+    """
+    Returns a dictionary of columns to rename based on the dataframe and type('csv' or 'api')
+    """
+    
+    # Build a dictionary of column renamings for use in pandas rename function
+    renamed_columns = {}
+    column_names = list(df.columns)
+    lower_columns = [name.lower().replace(' ','').replace('_','') for name in column_names]
+    for i in range(len(column_names)):
+        renamed_columns[column_names[i]] = lower_columns[i]
+
+    if type == 'csv':
+        # build csv rename dictionary
+        renamed_columns['Latitude'] = 'decimallatitude'
+        renamed_columns['Longitude'] = 'decimallongitude'
+        renamed_columns['Museum_Cat_No'] = 'museumcatnumber'
+        renamed_columns['HUC 8 Number'] = 'huc8'
+        renamed_columns['Source'] = 'latlongsource'
+        renamed_columns['Accuracy'] = 'latlongaccuracy'
+    elif type == 'api':
+        # build api rename dictionary
+        renamed_columns['key'] = 'specimennumber'
+    else:
+        # error
+        pass
+
+    return renamed_columns
+
+
 def get_occurrence_header():
     """
     Returns a list of strings corresponding to the column names for occurrence queries
     """
     str_list = ['speciesID', 'group', 'family', 'genus', 'species', 'scientificName', 'commonName', 'state', 'county', 'locality', 'decimalLatitude', 'decimalLongitude', 'latLongSource', 'latLongAccuracy', 'Centroid Type', 'huc8Name', 'huc8', 'huc10Name', 'huc10', 'huc12Name', 'huc12', 'date', 'year', 'month', 'day', 'status', 'comments', 'recordType', 'disposal', 'museumCatNumber', 'freshMarineIntro', 'references']
     str_list = [name.lower().replace(' ', '').replace('_','') for name in str_list]
-    return str_list
+    return []
+
 
 def getdf(species_id, keep_columns=None, limit=100, api_key=None):
     """
     Returns a pandas dataframe containing NAS query results for a given species ID
     """
 
+    # Check for API key
     if api_key is not None:
         url_request = f"{URL_BASE}/occurrence/search?species_ID={species_id}&api_key={api_key}"
     else:
         url_request = f"{URL_BASE}/occurrence/search?species_ID={species_id}"
     
+    # Get dataframe from API request
     request_json = requests.get(url_request, params={'limit':limit}).json()
-    column_names = list(request_json['results'][0].keys())
-    lower_columns = [name.lower().replace(' ','').replace('_','') for name in column_names]
+    api_df = pd.json_normalize(request_json, 'results')
+
+    # Add columns that are in a CSV dataframe but not an API dataframe
+    api_df['country'] = np.nan
+    api_df['drainagename'] = np.nan
+
+    # Rename columns
+    renamed_columns = get_col_rename(api_df, 'api')
+    api_df = api_df.rename(columns=renamed_columns)
+
+    # Reorder columns
+    cols = list(api_df.columns)
+    cols = cols[0:8] + cols[33:34] + cols[8:33] + cols[34:] # country
+    cols = cols[0:16] + cols[34:] + cols[16:34] # drainagename
+    api_df = api_df[cols]
     
-    # Build a dictionary of column renamings for use in pandas rename function
-    renamed_columns = {}
-    for i in range(len(column_names)):
-        renamed_columns[column_names[i]] = lower_columns[i]
-    
+    # Drop unwanted columns
     if keep_columns is None:
         keep_columns = list(renamed_columns.values())
+    # TODO: Add error checking for invalid column names from user
     drop_columns = np.setdiff1d(list(renamed_columns.values()), keep_columns)
+    api_df = api_df.drop(drop_columns, axis=1)
     
-    request_df = pd.json_normalize(request_json, 'results')
-    request_df = request_df.rename(columns=renamed_columns)
-    request_df = request_df.drop(drop_columns, axis=1)
-    #request_df = request_df.set_index('key')
-    
-    return request_df
+    return api_df
 
 
 def process_csv_df(csv_file, keep_columns=None):
@@ -55,17 +95,37 @@ def process_csv_df(csv_file, keep_columns=None):
     Converts a manually downloaded CSV file from the NAS database into a pandas dataframe
     """
 
+    # Get dataframe from CSV file
     csv_df = pd.read_csv(csv_file, low_memory=False)
-    column_names = list(csv_df.columns)
-    lower_columns = [name.lower().replace(' ','').replace('_','') for name in column_names]
+    
+    # Add columns that are in an API dataframe but not a CSV dataframe
+    csv_df['centroidtype'] = np.nan
+    csv_df['date'] = np.nan
+    csv_df['genus'] = np.nan
+    csv_df['huc10name'] = np.nan
+    csv_df['huc10'] = np.nan
+    csv_df['huc12name'] = np.nan
+    csv_df['huc12'] = np.nan
+    csv_df['huc8name'] = np.nan
+    csv_df['species'] = np.nan
 
-    # Build a dictionary of column renamings for use in pandas rename function
-    renamed_columns = {}
-    for i in range(len(column_names)):
-        renamed_columns[column_names[i]] = lower_columns[i]
+    # Rename columns so both csv and api dataframes have identical headers
+    renamed_columns = get_col_rename(csv_df, 'csv')
+    csv_df = csv_df.rename(columns=renamed_columns)
 
+    # Reorder columns
+    cols = list(csv_df.columns)
+    cols = cols[:4] + cols[69:70] + cols[75:76] + cols[4:69] + cols[70:75] # species and genus
+    cols = cols[:17] + cols[69:70] + cols[17:69] + cols[70:] # centroidtype
+    cols = cols[:18] + cols[75:] + cols[18:75] # huc8name
+    cols = cols[:20] + cols[72:] + cols[20:72] # huc10name, huc10, huc12name, huc12
+    cols = cols[:24] + cols[75:] + cols[24:75] # date
+    csv_df = csv_df[cols]
+
+    # Get list of columns to keep
     if keep_columns is None:
         keep_columns = list(renamed_columns.values())
+    # TODO: Add error checking for invalid column names from user
 
     # Always remove the separate reference fields
     for i in range(6):
@@ -77,32 +137,31 @@ def process_csv_df(csv_file, keep_columns=None):
         keep_columns.remove(f"publisher{i+1}")
         keep_columns.remove(f"location{i+1}")
     
+    # Get list of columns to drop
     drop_columns = np.setdiff1d(list(renamed_columns.values()), keep_columns)
-    csv_df = csv_df.rename(columns=renamed_columns)
 
     # Convert separate reference fields into a list of reference dictionaries
     # This is for compatibility with NAS API dataframes
-
     ref_list_of_lists = [None] * len(csv_df)
     i = 0
     for row in csv_df.itertuples():
-        # for each row
         ref_list = [None] * 6
         for j in range(6):
-            # for each reference section in row, build a dict and add it to the list of dicts
+            # For each reference section in row, build a dict and add it to the list of dicts
             ref_dict = {}
             # Convert key and date to integer instead of float if existent
-            ref_dict['key']       = int(row[26 + j * 7]) if not math.isnan(row[26 + j * 7]) else math.nan
-            ref_dict['type']      = row[27 + j * 7]
-            ref_dict['date']      = int(row[28 + j * 7]) if not math.isnan(row[28 + j * 7]) else math.nan
-            ref_dict['author']    = row[29 + j * 7]
-            ref_dict['title']     = row[30 + j * 7]
-            ref_dict['publisher'] = row[31 + j * 7]
-            ref_dict['location']  = row[32 + j * 7]
+            ref_dict['key']       = int(row[35 + j * 7]) if not math.isnan(row[35 + j * 7]) else math.nan
+            ref_dict['type']      = row[36 + j * 7]
+            ref_dict['date']      = int(row[37 + j * 7]) if not math.isnan(row[37 + j * 7]) else math.nan
+            ref_dict['author']    = row[38 + j * 7]
+            ref_dict['title']     = row[39 + j * 7]
+            ref_dict['publisher'] = row[40 + j * 7]
+            ref_dict['location']  = row[41 + j * 7]
             ref_list[j] = ref_dict
         ref_list_of_lists[i] = ref_list
         i += 1
 
+    # Add reference column and drop unwanted columns
     csv_df['references'] = ref_list_of_lists
     csv_df = csv_df.drop(drop_columns, axis=1)
     
