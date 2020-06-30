@@ -42,13 +42,16 @@ def get_col_rename(df, type):
     return renamed_columns
 
 
-def get_occurrence_header():
+def get_header():
     """
     Returns a list of strings corresponding to the column names for occurrence queries
     """
-    str_list = ['speciesID', 'group', 'family', 'genus', 'species', 'scientificName', 'commonName', 'state', 'county', 'locality', 'decimalLatitude', 'decimalLongitude', 'latLongSource', 'latLongAccuracy', 'Centroid Type', 'huc8Name', 'huc8', 'huc10Name', 'huc10', 'huc12Name', 'huc12', 'date', 'year', 'month', 'day', 'status', 'comments', 'recordType', 'disposal', 'museumCatNumber', 'freshMarineIntro', 'references']
-    str_list = [name.lower().replace(' ', '').replace('_','') for name in str_list]
-    return []
+    str_list = ['specimennumber','speciesid','group','family','genus','species','scientificname', \
+                'commonname','country','state','county','locality','decimallatitude','decimallongitude', \
+                'latlongsource','latlongaccuracy','drainagename','centroidtype','huc8name','huc8', \
+                'huc10name','huc10','huc12name','huc12','date','year','month','day','status','comments', \
+                'recordtype','disposal','museumcatnumber','freshmarineintro','references']
+    return str_list
 
 
 def getdf(species_id, keep_columns=None, limit=100, api_key=None):
