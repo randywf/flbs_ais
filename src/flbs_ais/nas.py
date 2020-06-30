@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import requests
 import os
 import sys
@@ -66,19 +67,6 @@ def process_csv_df(csv_file, keep_columns=None):
     if keep_columns is None:
         keep_columns = list(renamed_columns.values())
 
-    # TODO: Convert separate reference fields into a list of reference dictionaries
-    # This is for compatibility with NAS API dataframes
-
-    ref_column_names = [None] * 42
-    for i in range(0, 42, 7):
-        ref_column_names[i]   = f"reference{int((i+8)/7)}"
-        ref_column_names[i+1] = f"type{int((i+8)/7)}"
-        ref_column_names[i+2] = f"date{int((i+8)/7)}"
-        ref_column_names[i+3] = f"author{int((i+8)/7)}"
-        ref_column_names[i+4] = f"title{int((i+8)/7)}"
-        ref_column_names[i+5] = f"publisher{int((i+8)/7)}"
-        ref_column_names[i+6] = f"location{int((i+8)/7)}"
-
     # Always remove the separate reference fields
     for i in range(6):
         keep_columns.remove(f"reference{i+1}")
@@ -91,6 +79,31 @@ def process_csv_df(csv_file, keep_columns=None):
     
     drop_columns = np.setdiff1d(list(renamed_columns.values()), keep_columns)
     csv_df = csv_df.rename(columns=renamed_columns)
+
+    # Convert separate reference fields into a list of reference dictionaries
+    # This is for compatibility with NAS API dataframes
+
+    ref_list_of_lists = [None] * len(csv_df)
+    i = 0
+    for row in csv_df.itertuples():
+        # for each row
+        ref_list = [None] * 6
+        for j in range(6):
+            # for each reference section in row, build a dict and add it to the list of dicts
+            ref_dict = {}
+            # Convert key and date to integer instead of float if existent
+            ref_dict['key']       = int(row[26 + j * 7]) if not math.isnan(row[26 + j * 7]) else math.nan
+            ref_dict['type']      = row[27 + j * 7]
+            ref_dict['date']      = int(row[28 + j * 7]) if not math.isnan(row[28 + j * 7]) else math.nan
+            ref_dict['author']    = row[29 + j * 7]
+            ref_dict['title']     = row[30 + j * 7]
+            ref_dict['publisher'] = row[31 + j * 7]
+            ref_dict['location']  = row[32 + j * 7]
+            ref_list[j] = ref_dict
+        ref_list_of_lists[i] = ref_list
+        i += 1
+
+    csv_df['references'] = ref_list_of_lists
     csv_df = csv_df.drop(drop_columns, axis=1)
     
     return csv_df
