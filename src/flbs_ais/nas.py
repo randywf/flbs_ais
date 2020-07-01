@@ -148,7 +148,7 @@ def process_csv_df(csv_file, keep_columns=None):
     ref_list_of_lists = [None] * len(csv_df)
     i = 0
     for row in csv_df.itertuples():
-        ref_list = [None] * 6
+        ref_list = []
         for j in range(6):
             # For each reference section in row, build a dict and add it to the list of dicts
             ref_dict = {}
@@ -160,7 +160,8 @@ def process_csv_df(csv_file, keep_columns=None):
             ref_dict['title']     = row[39 + j * 7]
             ref_dict['publisher'] = row[40 + j * 7]
             ref_dict['publisherLocation']  = row[41 + j * 7]
-            ref_list[j] = ref_dict
+            if not math.isnan(ref_dict['key']):
+                ref_list.append(ref_dict)
         ref_list_of_lists[i] = ref_list
         i += 1
 
