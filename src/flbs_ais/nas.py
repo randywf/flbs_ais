@@ -154,12 +154,12 @@ def process_csv_df(csv_file, keep_columns=None):
             ref_dict = {}
             # Convert key and date to integer instead of float if existent
             ref_dict['key']       = int(row[35 + j * 7]) if not math.isnan(row[35 + j * 7]) else math.nan
-            ref_dict['type']      = row[36 + j * 7]
-            ref_dict['date']      = int(row[37 + j * 7]) if not math.isnan(row[37 + j * 7]) else math.nan
+            ref_dict['refType']   = row[36 + j * 7]
+            ref_dict['year']      = int(row[37 + j * 7]) if not math.isnan(row[37 + j * 7]) else math.nan
             ref_dict['author']    = row[38 + j * 7]
             ref_dict['title']     = row[39 + j * 7]
             ref_dict['publisher'] = row[40 + j * 7]
-            ref_dict['location']  = row[41 + j * 7]
+            ref_dict['publisherLocation']  = row[41 + j * 7]
             ref_list[j] = ref_dict
         ref_list_of_lists[i] = ref_list
         i += 1
@@ -188,7 +188,7 @@ def ref_counts(df):
     return df['references'].value_counts().items()
 
 
-def ref_string(ref_counts):
+def ref_string(ref_counts, limit=-1):
     """
     Returns a formatted string of information from a pandas series derived from NAS references
     """
@@ -197,6 +197,8 @@ def ref_string(ref_counts):
     ref_number = 1
 
     for ref_pair in ref_counts:
+        if limit != -1 and ref_number > limit:
+            break
         ref_string +=  '--------\n'
         ref_string += f"Most common reference {ref_number}\n"
         ref_string += '\n'
