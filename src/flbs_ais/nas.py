@@ -153,15 +153,17 @@ def process_csv_df(csv_file, keep_columns=None):
             # For each reference section in row, build a dict and add it to the list of dicts
             ref_dict = {}
             # Convert key and date to integer instead of float if existent
-            ref_dict['key']       = int(row[35 + j * 7]) if not math.isnan(row[35 + j * 7]) else math.nan
-            ref_dict['refType']   = row[36 + j * 7]
-            ref_dict['year']      = int(row[37 + j * 7]) if not math.isnan(row[37 + j * 7]) else math.nan
-            ref_dict['author']    = row[38 + j * 7]
-            ref_dict['title']     = row[39 + j * 7]
-            ref_dict['publisher'] = row[40 + j * 7]
-            ref_dict['publisherLocation']  = row[41 + j * 7]
+            ref_dict['key'] = int(row[35 + j * 7]) if not math.isnan(row[35 + j * 7]) else math.nan
             if not math.isnan(ref_dict['key']):
+                ref_dict['refType']           = row[36 + j * 7]
+                ref_dict['year']              = int(row[37 + j * 7]) if not math.isnan(row[37 + j * 7]) else math.nan
+                ref_dict['author']            = row[38 + j * 7]
+                ref_dict['title']             = row[39 + j * 7]
+                ref_dict['publisher']         = row[40 + j * 7]
+                ref_dict['publisherLocation'] = row[41 + j * 7]
                 ref_list.append(ref_dict)
+            else:
+                break
         ref_list_of_lists[i] = ref_list
         i += 1
 
