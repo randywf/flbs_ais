@@ -30,9 +30,10 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
     df = df.query('value == value')
 
     # Drop rows that are reverse duplicates of other rows
-    df['check_string'] = df.apply(lambda row: ''.join(sorted([row['index'], row['variable']])), axis=1)
-    df = df.drop_duplicates('check_string')
-    df = df.drop('check_string', axis=1)
+    if not df.empty:
+        df['check_string'] = df.apply(lambda row: ''.join(sorted([row['index'], row['variable']])), axis=1)
+        df = df.drop_duplicates('check_string')
+        df = df.drop('check_string', axis=1)
     
     return df
 
@@ -51,7 +52,7 @@ def get_input_drop(value):
     return choice
 
 
-def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False):
+def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False, dropped_list=None):
     # Get partial dependencies
     if verbose:
         print("Building partial dependency table...")
@@ -63,7 +64,7 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
             print("Done.")
         return X
     
-    # Recursive: Drop partial depencies and run again
+    # Recursive: Drop partial dependencies and run again
     if interactive:
         drop_cols = []
         values = df_partial.values
@@ -81,8 +82,28 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
             print(drop_col, end='')
         print()
     
+    # Check if dropped_list was passed as a parameter (dropped_list will not be default value)
+    # This is necessary because checking if None evaluates True in the case of both the default
+    # argument and in the case of an empty list that was passed as the parameter 'dropped_list'
+    if dropped_list is not remove_partial_dependencies.__defaults__[2]:
+        # Append() will modify the list that was passed as the parameter, not a copy
+        for drop_col in drop_cols:
+            dropped_list.append(drop_col)
+
     X = X.drop(columns=drop_cols, axis=1)
-    return remove_partial_dependencies(X, y, threshold, verbose=verbose)
+
+    if interactive:
+        choice = -1
+        while True:
+            choice = input("Continue finding partial dependencies? (y/n): ")
+            if choice in ('y', 'n'):
+                break
+        if choice == 'y':
+            return remove_partial_dependencies(X, y, threshold, verbose=verbose, dropped_list=dropped_list)
+        else:
+            return X
+    else:
+        return remove_partial_dependencies(X, y, threshold, verbose=verbose, dropped_list=dropped_list)
 
 
 if __name__ == "__main__":        
