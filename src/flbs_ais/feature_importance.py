@@ -71,12 +71,18 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
     if interactive:
         drop_cols = []
         values = df_partial.values
+        if verbose:
+            for value in values:
+                print(f"'{value[0]}'{''.ljust(28-len(value[0]))} {value[2]:.2f} dependence with: \t'{value[1]}'")
         for value in values:
             choice = get_input_drop(value)
             if choice is not None:
                 drop_cols.append(value[choice])
     else:
         drop_cols = list(df_partial['index'].values)
+    
+    # Remove duplicate columns from drop_cols
+    drop_cols = list(dict.fromkeys(drop_cols))
     
     if verbose:
         print("Dropping: ", end='')
