@@ -31,6 +31,29 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
     return df
 
 
+def remove_partial_dependencies(X, y, threshold, verbose=False):
+    # Get partial dependencies
+    if verbose:
+        print("Building partial dependency table...")
+    df_partial = get_partial_dependencies(X, y, threshold)    
+    
+    # Base case: No partial dependencies above the threshold
+    if df_partial.empty:
+        if verbose:
+            print("Done.")
+        return X
+    
+    # Recursive: Drop partial depencies and run again
+    drop_cols = list(df_partial['index'].values)
+    if verbose:
+        values = df_partial.values
+        for value in values:
+            print(f"    Dropping:\t'{value[0]}'{''.ljust(28-len(value[0]))} {value[2]:.2f} dependence with: \t'{value[1]}'")
+        print("Recursing...\n")
+    X = X.drop(columns=drop_cols, axis=1)
+    return remove_partial_dependencies(X, y, threshold, verbose=verbose)
+
+
 if __name__ == "__main__":        
     csv_WCT = pd.read_csv("../../tmp/WCT_Clean.csv")
     csv_RBT = pd.read_csv("../../tmp/RBT_Clean.csv")
