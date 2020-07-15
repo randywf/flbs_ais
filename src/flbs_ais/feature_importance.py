@@ -31,7 +31,11 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
 
     # Drop rows that are reverse duplicates of other rows
     if not df.empty:
-        df['check_string'] = df.apply(lambda row: ''.join(sorted([row['index'], row['variable']])), axis=1)
+        check_string_list = []
+        for row in df.itertuples():
+            string = ''.join(sorted([row[1], row[2]]))
+            check_string_list.append(string)
+        df.insert(3, "check_string", check_string_list)
         df = df.drop_duplicates('check_string')
         df = df.drop('check_string', axis=1)
     
