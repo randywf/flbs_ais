@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 
 import pandas as pd
 import numpy as np
@@ -31,7 +32,21 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
     return df
 
 
-def remove_partial_dependencies(X, y, threshold, verbose=False):
+def get_input_drop(value):
+    choice = -1
+    while True:
+        choice = eval(input(f"Drop '{value[0]}' {''.ljust(28-len(value[0]))} or '{value[1]}'? {''.ljust(28-len(value[1]))} Dependence: {value[2]:.2f} (1/2/n): "))
+        if choice not in (1, 2, 'n'):
+            print(f"Entered: {choice}, try entering 1, 2, or n")
+        else:
+            break
+    if choice == 1:   choice = 0
+    if choice == 2:   choice = 1
+    if choice == 'n': choice = None
+    return choice
+
+
+def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False):
     # Get partial dependencies
     if verbose:
         print("Building partial dependency table...")
@@ -44,11 +59,23 @@ def remove_partial_dependencies(X, y, threshold, verbose=False):
         return X
     
     # Recursive: Drop partial depencies and run again
-    drop_cols = list(df_partial['index'].values)
-    if verbose:
+    if interactive:
+        drop_cols = []
         values = df_partial.values
         for value in values:
-            print(f"    Dropping:\t'{value[0]}'{''.ljust(28-len(value[0]))} {value[2]:.2f} dependence with: \t'{value[1]}'")
+            choice = get_input_drop(value)
+            if choice:
+                drop_cols.append(value[choice])
+    else:
+        drop_cols = list(df_partial['index'].values)
+    
+    if verbose:
+        print("Dropping: ", end='')
+        for i, drop_col in enumerate(drop_cols):
+            if i: print(', ', end='')
+            print(drop_col, end='')
+        print()
+    
     X = X.drop(columns=drop_cols, axis=1)
     return remove_partial_dependencies(X, y, threshold, verbose=verbose)
 
