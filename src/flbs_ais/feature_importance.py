@@ -70,7 +70,7 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
         values = df_partial.values
         for value in values:
             choice = get_input_drop(value)
-            if choice:
+            if choice is not None:
                 drop_cols.append(value[choice])
     else:
         drop_cols = list(df_partial['index'].values)
