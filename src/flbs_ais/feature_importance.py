@@ -49,7 +49,6 @@ def remove_partial_dependencies(X, y, threshold, verbose=False):
         values = df_partial.values
         for value in values:
             print(f"    Dropping:\t'{value[0]}'{''.ljust(28-len(value[0]))} {value[2]:.2f} dependence with: \t'{value[1]}'")
-        print("Recursing...\n")
     X = X.drop(columns=drop_cols, axis=1)
     return remove_partial_dependencies(X, y, threshold, verbose=verbose)
 
