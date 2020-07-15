@@ -28,6 +28,11 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
 
     # Take advantage of fact that NaN != NaN to find non-NaN values in table
     df = df.query('value == value')
+
+    # Drop rows that are reverse duplicates of other rows
+    df['check_string'] = df.apply(lambda row: ''.join(sorted([row['index'], row['variable']])), axis=1)
+    df = df.drop_duplicates('check_string')
+    df = df.drop('check_string', axis=1)
     
     return df
 
