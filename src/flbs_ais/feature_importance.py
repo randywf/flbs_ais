@@ -39,15 +39,14 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
 
 
 def get_input_drop(value):
-    choice = -1
     while True:
-        choice = eval(input(f"Drop '{value[0]}' {''.ljust(28-len(value[0]))} or '{value[1]}'? {''.ljust(28-len(value[1]))} Dependence: {value[2]:.2f} (1/2/n): "))
-        if choice not in (1, 2, 'n'):
+        choice = input(f"Drop '{value[0]}' {''.ljust(28-len(value[0]))} or '{value[1]}'? {''.ljust(28-len(value[1]))} Dependence: {value[2]:.2f} (1/2/n): ")
+        if choice not in ('1','2','n'):
             print(f"Entered: {choice}, try entering 1, 2, or n")
         else:
             break
-    if choice == 1:   choice = 0
-    if choice == 2:   choice = 1
+    if choice == '1': choice = 0
+    if choice == '2': choice = 1
     if choice == 'n': choice = None
     return choice
 
