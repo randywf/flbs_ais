@@ -10,7 +10,7 @@ from rfpimp import feature_dependence_matrix
 
 
 
-def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
+def _get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
     X_train = train_test_split(X, y, test_size=test_size, random_state=random_state)[0]
     df = feature_dependence_matrix(X_train)
 
@@ -42,7 +42,7 @@ def get_partial_dependencies(X, y, threshold, test_size=0.2, random_state=1):
     return df
 
 
-def get_input_drop(value):
+def _get_input_drop(value):
     while True:
         choice = input(f"Drop '{value[0]}' {''.ljust(28-len(value[0]))} or '{value[1]}'? {''.ljust(28-len(value[1]))} Dependence: {value[2]:.2f} (1/2/n): ")
         if choice not in ('1','2','n'):
@@ -59,7 +59,7 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
     # Get partial dependencies
     if verbose:
         print("Building partial dependency table...")
-    df_partial = get_partial_dependencies(X, y, threshold)    
+    df_partial = _get_partial_dependencies(X, y, threshold)    
     
     # Base case: No partial dependencies above the threshold
     if df_partial.empty:
@@ -75,7 +75,7 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
             for value in values:
                 print(f"'{value[0]}'{''.ljust(28-len(value[0]))} {value[2]:.2f} dependence with: \t'{value[1]}'")
         for value in values:
-            choice = get_input_drop(value)
+            choice = _get_input_drop(value)
             if choice is not None:
                 drop_cols.append(value[choice])
     else:
@@ -130,5 +130,5 @@ if __name__ == "__main__":
     X_wct_collinear = drop_collinear(X_wct,0.7)
     X_rbt_collinear = drop_collinear(X_rbt,0.7)
 
-    get_partial_dependencies(X_wct_collinear, y_wct, 0.6)
+    _get_partial_dependencies(X_wct_collinear, y_wct, 0.6)
 """
