@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 import numpy as np
 
-from flbs_ais.drop_collinear import drop_collinear
+##from flbs_ais.drop_collinear import drop_collinear
 from sklearn.model_selection import train_test_split
 from rfpimp import feature_dependence_matrix
 
@@ -114,7 +114,7 @@ def remove_partial_dependencies(X, y, threshold, interactive=True, verbose=False
     else:
         return remove_partial_dependencies(X, y, threshold, verbose=verbose, dropped_list=dropped_list)
 
-
+"""
 if __name__ == "__main__":        
     csv_WCT = pd.read_csv("../../tmp/WCT_Clean.csv")
     csv_RBT = pd.read_csv("../../tmp/RBT_Clean.csv")
@@ -131,3 +131,4 @@ if __name__ == "__main__":
     X_rbt_collinear = drop_collinear(X_rbt,0.7)
 
     get_partial_dependencies(X_wct_collinear, y_wct, 0.6)
+"""
